@@ -15,6 +15,13 @@ public class VM extends MultiDimensionalIntObject
 	{
 		super(values);
 	}
+
+	public VM clone()
+	{
+		VM clone = new VM(this.getValues());
+		clone.setName(this.name);
+		return clone;
+	}
 /*
 	public static void main(String[] args)
 	{

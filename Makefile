@@ -6,8 +6,8 @@ clean:
 
 redo: clean all
 
-commit: clean
+commit: 
 	echo -n "Enter message for commit: "
-	read commitm
-	git commit -m $commitm
+	@-read commitm; \
+	git commit -m $$commitm
 	git push origin master 

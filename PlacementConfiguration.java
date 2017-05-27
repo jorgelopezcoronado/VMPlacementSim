@@ -1,8 +1,8 @@
 public class PlacementConfiguration
 {
 	private int[][] pc;
-	private VMConfiguration VC = null;
-	private CloudInfrastructure CI = null;
+	private final  VMConfiguration VC;
+	private final CloudInfrastructure CI;
 	
 	public PlacementConfiguration(CloudInfrastructure CI, VMConfiguration VC) throws IllegalArgumentException
 	{
@@ -22,6 +22,21 @@ public class PlacementConfiguration
 		this.VC = VC;
 
 		this.pc = new int[CI.size()][VC.size()];
+	}
+	
+	public VMConfiguration getVMConfiguration()
+	{
+		return this.VC;
+	}
+		
+	public CloudInfrastructure getCloudInfrastructure()
+	{
+		return this.CI;
+	}
+
+	public int[][] getMatrix()
+	{
+		return this.pc;
 	}
 
 	public void setValAtIndex(int value, int i, int j) throws IllegalArgumentException
@@ -47,8 +62,8 @@ public class PlacementConfiguration
 		this.pc[i][j]++;
 
 	}
-	
-	public boolean equals(Object o)
+
+	public boolean pcEquals(Object o)
 	{
 		if(!(o instanceof PlacementConfiguration))
 			return false;
@@ -63,6 +78,16 @@ public class PlacementConfiguration
 					return false;
 		return true;
 	}
+	
+	public boolean equals(Object o)
+	{
+		if(!(o instanceof PlacementConfiguration))
+			return false;
+		PlacementConfiguration temp = (PlacementConfiguration)o;
+
+		return this.pcEquals(temp) &&  temp.VC.equals(this.VC) && temp.CI.equals(this.CI); //compare also environment
+	}
+
 
 	public String toString()
 	{
@@ -76,7 +101,19 @@ public class PlacementConfiguration
 		return retVal;
 	}
 
+	//deep deep closning
+	public PlacementConfiguration clone()
+	{
+		PlacementConfiguration clone = new PlacementConfiguration(this.CI.clone(), this.VC.clone());
+		for(int i = 0; i < this.pc.length; i++)
+			for (int j = 0; j < this.pc[0].length; j++)	
+				clone.pc[i][j] = this.pc[i][j];	
+	
+		return clone;
+	}
+
 	/*2add: matrix norm computations for new metrics / distance functions*/
+	/*2add: */
 
 /*
 	public static void main(String args[])

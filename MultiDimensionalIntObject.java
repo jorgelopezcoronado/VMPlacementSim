@@ -75,4 +75,5 @@ public abstract class MultiDimensionalIntObject
 		
 		return true;
 	}
+
 }
