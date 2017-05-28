@@ -12,9 +12,29 @@ public class VMPlacementTester
 	}
 
 	//2do
+
+	private static int resourceUtilization(PlacementConfiguration pc)
+	{
+		//$\mathcal{U}=\sum_{i=1}^{m}\sum_{j=1}^{n}\left(pc_{ij}*\sum_{k=1}^{p}vm_{j_k}\right)$, where $vm_{j_k}$ represents the $k$-th element (resource limit) of the $j$-th virtual machine configuration type
+		//also denoted as f in our paper... 
+		VMConfiguration VC = pc.getVMConfiguration();
+		CloudInfrastructure CI = pc.getCloudInfrastructure();
+		int u = 0;	
+		for(int i = 0; i < CI.size(); i++)
+			for(int j = 0; j < VC.size(); j++)
+			{
+				int sum_of_vmjParams = 0;
+				int[] vmjParams = ((VM)VC.get(j)).getValues();
+				for(int k = 0; k < vmjParams.length; k++)
+					sum_of_vmjParams += vmjParams[k];
+				u += pc.getMatrix()[i][j] * sum_of_vmjParams;
+			}
+		
+		return u;
+	}
 	public static int distance(PlacementConfiguration expected, PlacementConfiguration out)	
 	{
-		return 0;
+		return Math.abs(resourceUtilization(expected) - resourceUtilization(out)) ;
 	}
 
 	public void test(VMPlacementAlgorithm A)
@@ -29,14 +49,16 @@ public class VMPlacementTester
 				System.out.println("Intial placement configuration");
 				System.out.println(pc);
 				VMPlacementSimulator.simulate(pc, alpha, A);
-				System.out.println("Final placement configuration");
+				System.out.println("Final u = "+resourceUtilization(pc)+", Final placement configuration");
 				System.out.println(pc);
-				System.out.println("Expected:\n\t\t==================\n");
+				System.out.println("Expected \n\t\t==================\n");
 				LinkedList<PlacementConfiguration> expectedouts  = testcase.getExpectedOutputs();
 				for (PlacementConfiguration expectedout : expectedouts)
 				{
+					System.out.println("u = "+resourceUtilization(expectedout));
 					System.out.println(expectedout);
 					System.out.println("\t\t==================\n");
+					System.out.println("Distance: "+distance(expectedout, pc));
 				}
 				//2do: measure distance
 			}
@@ -88,7 +110,7 @@ public class VMPlacementTester
 	public static void main(String args[])
 	{
 		LinkedList<VMPlacementTestCase> testcases = createTestCases();
-		int repetitions  = 1;
+		int repetitions  = 3;
 		VMPlacementTester tester = new VMPlacementTester(repetitions, testcases);
 		AvailableRandomPlacement arp = new AvailableRandomPlacement();	
 		tester.test(arp);
