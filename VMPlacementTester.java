@@ -226,15 +226,15 @@ public class VMPlacementTester
 	
 		RequestSequence alpha = new RequestSequence();
 
-
-		for(int i = 0; i < 66; i++)
-			alpha.add(new Request(0,0,0,1));//66 machines type 4
-	
 		for(int i = 0; i < 102; i++)
 			alpha.add(new Request(0,1,0,0)); //38 machines type 2
 
 		for(int i = 0; i < 102; i++)
 			alpha.add(new Request(1,0,0,0)); //38 machines type 1
+	
+		for(int i = 0; i < 66; i++)
+			alpha.add(new Request(0,0,0,1));//66 machines type 4
+
 
 		PlacementConfiguration expected = pconf.clone();
 		expected.setValAtIndex(32,0,1); //32 vms type 2 placed at host 1
