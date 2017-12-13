@@ -3,6 +3,7 @@ public class PlacementConfiguration
 	private int[][] pc;
 	private final  VMConfiguration VC;
 	private final CloudInfrastructure CI;
+	private final PowerConsumptionProfile CP;
 	
 	public PlacementConfiguration(CloudInfrastructure CI, VMConfiguration VC) throws IllegalArgumentException
 	{
@@ -20,8 +21,43 @@ public class PlacementConfiguration
 
 		this.CI = CI;
 		this.VC = VC;
+	
+		/*create default power consumption profile.*/
+		PowerConsumptionProfile pcp = new PowerConsumptionProfile();
+		int dimensions = ((Host)CI.element()).dimensions + 1;
+		for(int i = 0; i < CI.size(); i++)
+			pcp.add(new PowerConsumption(dimensions));
+		this.CP = pcp;
 
 		this.pc = new int[CI.size()][VC.size()];
+	}
+
+	public PlacementConfiguration(CloudInfrastructure CI, VMConfiguration VC, PowerConsumptionProfile CP) throws IllegalArgumentException
+	{
+		if(CI.size() <= 0 || VC.size() <= 0 || CP.size() <= 0)
+		{
+			System.out.println("Error, wrong arguments for placement configuration size, 0 not allowed!");
+			throw new IllegalArgumentException();
+		}
+		
+		if(((Host)CI.getFirst()).vector.length != ((VM)VC.getFirst()).vector.length)
+		{
+			System.out.println("Error, CI and VC have different dimension size not allowed!");
+			throw new IllegalArgumentException();
+		}
+		
+		if(((Host)CI.getFirst()).vector.length + 1 != ((PowerConsumption)VC.getFirst()).vector.length)
+		{
+			System.out.println("Error, CI and VC have different dimension size not allowed!");
+			throw new IllegalArgumentException();
+		}
+
+		this.CI = CI;
+		this.VC = VC;
+	
+		this.pc = new int[CI.size()][VC.size()];
+
+		this.CP = CP;
 	}
 	
 	public VMConfiguration getVMConfiguration()
@@ -32,6 +68,11 @@ public class PlacementConfiguration
 	public CloudInfrastructure getCloudInfrastructure()
 	{
 		return this.CI;
+	}
+
+	public PowerConsumptionProfile getPowerConsumptionProfile()
+	{
+		return this.CP;
 	}
 
 	public int[][] getMatrix()

@@ -1,5 +1,11 @@
 import java.util.LinkedList;
 
+@FunctionalInterface
+interface ObjectiveFunction
+{
+	public int compute(PlacementConfiguration pc);
+}
+
 public class VMPlacementTester
 {
 	private final int repetitions;
@@ -12,8 +18,6 @@ public class VMPlacementTester
 		this.repetitions = repetitions;
 		this.testcases = testcases;
 	}
-
-	//2do
 
 	private static int occupation(PlacementConfiguration pc)
 	{
@@ -34,15 +38,32 @@ public class VMPlacementTester
 		
 		return o;
 	}
-	public static int distance(PlacementConfiguration expected, PlacementConfiguration out)	
+
+	private static int powerConsumption(PlacementConfiguration pc)
 	{
-		return Math.abs(occupation(expected) - occupation(out)) ;
+		//ef=\sum_{i=1}^{m}\left(e_{i_0}*b_i+\sum_{j=1}^{n}\left(pc_{ij}*\sum_{k=1}^{p}e_{i_k}*vm_{j_k}\right)\right)		
+		VMConfiguration VC = pc.getVMConfiguration();
+ 		CloudInfrastructure CI = pc.getCloudInfrastructure();
+		PowerConsumptionProfile CP = pc.getPowerConsumptionProfile();
+		int e = 0;
+		
+		for(int i = 0; i< CI.size(); i++)
+			for(int j = 0; j < VC.size(); j++)
+			{
+				int [] pCons  = ((PowerConsumption)CP.get(i)).getValues();
+			}
+		return e;
 	}
 
-	public void test(VMPlacementAlgorithm A)
+	public static int distance(PlacementConfiguration expected, PlacementConfiguration out, ObjectiveFunction function)	
+	{
+		return Math.abs(function.compute(expected) - function.compute(out));
+	}
+
+	public void test(VMPlacementAlgorithm A, ObjectiveFunction function, String name)
 	{
 
-		System.out.println("Testing "+A.getName());
+		System.out.println("Testing "+A.getName()+", criterion: "+name);
 		
 		int tc = 1; ///quick and dirty modif... should have changed the for and that is it
 
@@ -66,7 +87,7 @@ public class VMPlacementTester
 				VMPlacementSimulator.simulate(pc, alpha, A);
 				if(this.verbose)
 				{
-					System.out.println("Final f = "+occupation(pc)+", Final placement configuration");
+					System.out.println("Final of = "+occupation(pc)+", Final placement configuration");
 					System.out.println(pc);
 					System.out.println("Expected \n\t\t==================\n");
 				}
@@ -74,18 +95,18 @@ public class VMPlacementTester
 				{	
 					if(this.verbose)
 					{
-						System.out.println("f = "+occupation(expectedout));
+						System.out.println("of = "+occupation(expectedout));
 						System.out.println(expectedout);
 						System.out.println("\t\t==================\n");
 					}
-					int distance = distance(expectedout, pc);
+					int distance = distance(expectedout, pc, function);
 					avg_d += distance;
 					if(this.verbose)
-						System.out.println("Distance: "+distance);
+						System.out.println(name+" Distance: "+distance);
 				}
 			}
 	
-			System.out.println("\tDistance: "+(double)avg_d/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(1000));
+			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(1000));
 		}
 	
 	}	
@@ -259,9 +280,9 @@ public class VMPlacementTester
 	public static LinkedList<VMPlacementTestCase> createTestCases()
 	{
 		LinkedList<VMPlacementTestCase> testcases = new LinkedList();
-//		testcases.add(testcase1());
-//		testcases.add(testcase2());
-//		testcases.add(testcase3());
+		testcases.add(testcase1());
+		testcases.add(testcase2());
+		testcases.add(testcase3());
 		testcases.add(testcase4());
 		return testcases;
 	}
@@ -272,8 +293,8 @@ public class VMPlacementTester
 		VMPlacementTester tester = new VMPlacementTester(false, 100, testcases);
 		AvailableRandomPlacement arp = new AvailableRandomPlacement();	
 		FirstFitPlacement ffp = new FirstFitPlacement();
-		tester.test(arp);
+		tester.test(arp, VMPlacementTester::occupation, "Occupation");
 		System.out.println();
-		tester.test(ffp);
+		tester.test(ffp, VMPlacementTester::occupation, "Occupation");
 	}
 }
