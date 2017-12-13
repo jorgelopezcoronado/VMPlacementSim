@@ -48,10 +48,19 @@ public class VMPlacementTester
 		int e = 0;
 		
 		for(int i = 0; i< CI.size(); i++)
+		{
+			int [] conso  = ((PowerConsumption)CP.get(i)).getValues();
+			//e_{i_0}*b_i
+			e+= conso[0]*(((Host)CI.get(i)).getBooted()?1:0);
 			for(int j = 0; j < VC.size(); j++)
 			{
-				int [] pCons  = ((PowerConsumption)CP.get(i)).getValues();
+				int sumOfPowerConsos = 0;
+				int[] vmjParams = ((VM)VC.get(j)).getValues();
+				for(int k=0; k < vmjParams.length; k++)
+					sumOfPowerConsos += conso[k+1] * vmjParams[k];//e_{i_k}*vm_{j_k}
+				e += pc.getMatrix()[i][j] * sumOfPowerConsos; //pc_{ij}*\sum_{k=1}^{p}
 			}
+		}
 		return e;
 	}
 
@@ -296,5 +305,10 @@ public class VMPlacementTester
 		tester.test(arp, VMPlacementTester::occupation, "Occupation");
 		System.out.println();
 		tester.test(ffp, VMPlacementTester::occupation, "Occupation");
+		System.out.println("\n\n");
+		tester.test(arp, VMPlacementTester::powerConsumption, "Power Consumption");
+		System.out.println();
+		tester.test(ffp, VMPlacementTester::powerConsumption, "Power Consumption");
+
 	}
 }
