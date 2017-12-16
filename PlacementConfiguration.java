@@ -46,7 +46,7 @@ public class PlacementConfiguration
 			throw new IllegalArgumentException();
 		}
 		
-		if(((Host)CI.getFirst()).vector.length + 1 != ((PowerConsumption)VC.getFirst()).vector.length)
+		if(((Host)CI.getFirst()).vector.length + 1 != ((PowerConsumption)CP.getFirst()).vector.length)
 		{
 			System.out.println("Error, CI and VC have different dimension size not allowed!");
 			throw new IllegalArgumentException();

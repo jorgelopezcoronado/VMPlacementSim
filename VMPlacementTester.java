@@ -148,10 +148,115 @@ public class VMPlacementTester
 
 	/*
 		Follwing 3 functions must be created for each new criterion:
-		private static GRBLinExpr <crit_model>(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
-		private static void <crit_constarints>(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model)
+		private static GRBLinExpr <crit>Model(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
+		private static void add<crit>Constarints(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model)
 		private static int <crit_f'_size>(PlacementConfiguration pc, VM vm)
 	*/
+
+	/*
+	//Power Consumption
+	*/
+
+	private static GRBLinExpr powerConsumptionModel(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
+	{
+		if(pc == null)
+			return null;
+
+		VMConfiguration VC = pc.getVMConfiguration();
+ 		CloudInfrastructure CI = pc.getCloudInfrastructure();
+		PowerConsumptionProfile CP = pc.getPowerConsumptionProfile();
+	
+		if(VC == null || CI == null || CP == null || VC.isEmpty() || CI.isEmpty() || CP.isEmpty())
+			return null;
+		
+		GRBLinExpr objective = new GRBLinExpr();
+
+		//ef=\sum_{i=1}^{m}\left(e_{i_0}*b_i+\sum_{j=1}^{n}\left(pc_{ij}*\sum_{k=1}^{p}e_{i_k}*vm_{j_k}\right)\right)		
+		for(int i = 1; i <= CI.size(); i++)
+		{
+			int [] conso  = ((PowerConsumption)CP.get(i - 1)).getValues();
+			//e_{i_0}*b_i
+			objective.addTerm(conso[0], vars.get("b_"+i));
+			for(int j = 1; j <= VC.size(); j++)
+			{
+				int sumOfPowerConsos = 0;
+				int[] vmjParams = ((VM)VC.get(j - 1)).getValues();
+				for(int k=1; k <= vmjParams.length; k++)
+					sumOfPowerConsos += conso[k] * vmjParams[k - 1];//e_{i_k}*vm_{j_k}
+				objective.addTerm(sumOfPowerConsos, vars.get("pc_"+i+"_"+j)); //pc_{ij}*\sum_{k=1}^{p}
+			}
+		}
+		return objective;
+
+	}
+
+	private static void addPowerConsumptionConstraints(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model)
+	{
+		VMConfiguration VC = pc.getVMConfiguration();
+                CloudInfrastructure CI = pc.getCloudInfrastructure();
+
+		if(VC == null || CI == null || CI.isEmpty() )
+			return;
+
+		int p = ((Host)CI.element()).getValues().length;
+
+		for (int i = 1; i <= CI.size(); i++)
+		{
+			for (int k = 1; k <= p; k++)
+			{
+				GRBLinExpr constraint = new GRBLinExpr();
+
+				for(int j = 1; j <= VC.size(); j++)
+					constraint.addTerm(((VM)VC.get(j-1)).getValues()[k-1], vars.get("pc_"+i+"_"+j));
+
+				constraint.addTerm (-((Host)CI.get(i-1)).getValues()[k-1],vars.get("b_"+i));
+				try
+				{
+					model.addConstr(constraint, GRB.LESS_EQUAL, 0, "h_"+i+"_r_"+k);
+				}
+				catch (GRBException e)
+				{
+					System.out.println("Error code: " + e.getErrorCode() + ". " +e.getMessage());
+				}
+				
+			}
+		}
+	}
+
+	private static int powerConsumptionSize(PlacementConfiguration pc, VM vm)
+	{
+
+		if(pc == null || vm == null)
+			return 0;
+
+		int size = 0;
+		
+		VMConfiguration VC = pc.getVMConfiguration();
+		PowerConsumptionProfile CP = pc.getPowerConsumptionProfile();
+
+		if(VC == null || VC.isEmpty() || CP == null || CP.isEmpty())
+			return 0;
+
+
+		int[] vmjParams = ((VM)VC.element()).getValues();
+		for(int k = 1; k <= vmjParams.length; k++)
+		{
+			int consoAvg = 0; 
+			for(int i = 1; i <= CP.size(); i++)	
+				consoAvg += ((PowerConsumption)CP.get(i - 1)).getValues()[k];
+				
+			size += consoAvg * vmjParams[k - 1];
+		}
+				
+		size /= CP.size();
+
+		return size;
+	}
+
+	/*
+	// Occupation
+	*/
+
 	private static GRBLinExpr occupationModel(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
 	{
 		if(pc == null)
@@ -230,6 +335,11 @@ public class VMPlacementTester
 		return size;
 	}
 
+	/***********************************
+		TS Derivation part
+	************************************
+	*/
+
 	private static void merge(int[] array, int l, int m, int r, PlacementConfiguration pc, VMConfiguration VC, VMSizeFunction f)
 	{
 		if(VC == null | f == null || array == null)
@@ -303,7 +413,7 @@ public class VMPlacementTester
 			
 			RequestSequence alpha = new RequestSequence();//empty	
 			//Add GRBVar vars in the hashmap
-
+		
 			for(int j = 1; j <= VC.size(); j++)
 				for(int i = 1; i <= CI.size(); i++)
 				{
@@ -314,6 +424,7 @@ public class VMPlacementTester
 					{
 						for(int j1 = 0; j1 < vars.get("pc_"+i+"_"+c).get(GRB.DoubleAttr.X); j1++)
 							alpha.add(new Request(requestValues));
+						
 					}
 					catch (GRBException e)
 					{	
@@ -369,7 +480,7 @@ public class VMPlacementTester
 			
 			//request sequence obtained as in submitted Algorithm 1 for the Springer's Software Quality Journal SI: Testing Software and Systems
 			RequestSequence alpha = boundaryTSGen(pc, vars, fsize);
-		
+
 			//get optimal... call optimal with another set of bounds if optimal differs from max otherwise optimal from obtained bnoundary
 			PlacementConfiguration expected = pc.clone();
 			
@@ -431,7 +542,15 @@ public class VMPlacementTester
 		For each new criterion a function must be created:
 		public static VMPlacementTestCase get<crit>TC (PlacementConfiguration pc)
 	*/
-	
+
+	//Power consumption
+	public static VMPlacementTestCase getPowerConsumptionTC (PlacementConfiguration pc)
+	{
+		return generateTestCase(pc, "Power Consumption", GRB.MINIMIZE, VMPlacementTester::powerConsumptionModel, VMPlacementTester::addPowerConsumptionConstraints, VMPlacementTester::powerConsumptionSize);
+	}
+
+
+	//Occupation	
 	public static VMPlacementTestCase getResourceUtilizationTC (PlacementConfiguration pc)
 	{
 		return generateTestCase(pc, "Occupation", GRB.MAXIMIZE, VMPlacementTester::occupationModel, VMPlacementTester::addOccupationConstraints, VMPlacementTester::occupationSize);
