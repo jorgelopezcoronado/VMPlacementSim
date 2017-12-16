@@ -86,8 +86,7 @@ public class PlacementConfiguration
 		{
 			System.out.println("Error, wrong arguments for placement configuration size, 0 not allowed!");
 			throw new IllegalArgumentException();
-		}
-		
+		}	
 		this.pc[i][j] = value;
 
 	}

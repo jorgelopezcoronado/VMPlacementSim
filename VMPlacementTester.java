@@ -7,25 +7,25 @@ import gurobi.*;
 @FunctionalInterface
 interface ObjectiveFunction
 {
-	public int compute(PlacementConfiguration pc);
+	int compute(PlacementConfiguration pc);
 }
 
 @FunctionalInterface
 interface ObjctiveFunctionModel
 {
-	public GRBLinExpr get(PlacementConfiguration pc, HashMap<String,GRBVar> vars);
+	GRBLinExpr get(PlacementConfiguration pc, HashMap<String,GRBVar> vars);
 }
 
 @FunctionalInterface
 interface ConstaintsModel
 {
-	public void add(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model);
+	void add(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model);
 }
 
 @FunctionalInterface
 interface VMSizeFunction
 {
-	public int size(PlacementConfiguration pc, VM vm);
+	int size(PlacementConfiguration pc, VM vm);
 }
 
 public class VMPlacementTester
@@ -41,7 +41,12 @@ public class VMPlacementTester
 		this.testcases = testcases;
 	}
 
-	private static int occupation(PlacementConfiguration pc)
+	/*
+		The following function must be created for each new criterion:
+		public static int <criterion>(PlacementConfiguration pc)
+	*/
+
+	public static int occupation(PlacementConfiguration pc)
 	{
 		//$\mathcal{U}=\sum_{i=1}^{m}\sum_{j=1}^{n}\left(pc_{ij}*\sum_{k=1}^{p}vm_{j_k}\right)$, where $vm_{j_k}$ represents the $k$-th element (resource limit) of the $j$-th virtual machine configuration type
 		//also denoted as f in our paper... 
@@ -61,7 +66,7 @@ public class VMPlacementTester
 		return o;
 	}
 
-	private static int powerConsumption(PlacementConfiguration pc)
+	public static int powerConsumption(PlacementConfiguration pc)
 	{
 		//ef=\sum_{i=1}^{m}\left(e_{i_0}*b_i+\sum_{j=1}^{n}\left(pc_{ij}*\sum_{k=1}^{p}e_{i_k}*vm_{j_k}\right)\right)		
 		VMConfiguration VC = pc.getVMConfiguration();
@@ -86,7 +91,7 @@ public class VMPlacementTester
 		return e;
 	}
 
-	public static int distance(PlacementConfiguration expected, PlacementConfiguration out, ObjectiveFunction function)	
+	private static int distance(PlacementConfiguration expected, PlacementConfiguration out, ObjectiveFunction function)	
 	{
 		return Math.abs(function.compute(expected) - function.compute(out));
 	}
@@ -141,7 +146,13 @@ public class VMPlacementTester
 		}
 	}	
 
-	public static GRBLinExpr occupationModel(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
+	/*
+		Follwing 3 functions must be created for each new criterion:
+		private static GRBLinExpr <crit_model>(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
+		private static void <crit_constarints>(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model)
+		private static int <crit_f'_size>(PlacementConfiguration pc, VM vm)
+	*/
+	private static GRBLinExpr occupationModel(PlacementConfiguration pc, HashMap<String,GRBVar> vars)
 	{
 		if(pc == null)
 			return null;
@@ -168,7 +179,7 @@ public class VMPlacementTester
 	
 	}
 
-	public static void addOccupationConstraints(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model)
+	private static void addOccupationConstraints(PlacementConfiguration pc, HashMap<String,GRBVar> vars, GRBModel model)
 	{
 		VMConfiguration VC = pc.getVMConfiguration();
                 CloudInfrastructure CI = pc.getCloudInfrastructure();
@@ -200,7 +211,7 @@ public class VMPlacementTester
 		}
 	}
 
-	public static int occupationSize(PlacementConfiguration pc, VM vm)
+	private static int occupationSize(PlacementConfiguration pc, VM vm)
 	{
 
 		if(pc == null || vm == null)
@@ -280,7 +291,7 @@ public class VMPlacementTester
 			
 	}
 		
-	public static RequestSequence boundaryTSGen(PlacementConfiguration pc, HashMap<String,GRBVar> vars, VMSizeFunction f) 
+	private static RequestSequence boundaryTSGen(PlacementConfiguration pc, HashMap<String,GRBVar> vars, VMSizeFunction f) 
 	{
 			VMConfiguration VC = pc.getVMConfiguration();
 			CloudInfrastructure CI = pc.getCloudInfrastructure();
@@ -316,14 +327,14 @@ public class VMPlacementTester
 	}
 
 	/* optGoal can be GRB.MAXIMIZE or GRB.MINIMIZE*/
-	public static VMPlacementTestCase generateTestCase(PlacementConfiguration pc, String name, int optGoal, ObjctiveFunctionModel objective, ConstaintsModel constraints, VMSizeFunction fsize)
+	private static VMPlacementTestCase generateTestCase(PlacementConfiguration pc, String name, int optGoal, ObjctiveFunctionModel objective, ConstaintsModel constraints, VMSizeFunction fsize)
 	{
 		try
 		{
 			GRBEnv env = new GRBEnv("VMPlacementTCGen."+name+".log");
 			GRBModel model = new GRBModel(env);
 			
-			HashMap  vars = new HashMap<String,GRBVar>();
+			HashMap<String,GRBVar>  vars = new HashMap<String,GRBVar>();
 			
 			VMConfiguration VC = pc.getVMConfiguration();
 			CloudInfrastructure CI = pc.getCloudInfrastructure();
@@ -338,7 +349,8 @@ public class VMPlacementTester
 				vars.put("b_"+i, model.addVar(0, 1, 0, GRB.INTEGER, "b_"+i));
 
 			//set objective boundary testing
-			model.setObjective(objective.get(pc, vars), GRB.MAXIMIZE);
+			GRBLinExpr obj = objective.get(pc, vars);
+			model.setObjective(obj, GRB.MAXIMIZE);
 		
 			//add set of contraints
 			constraints.add(pc, vars, model);	
@@ -355,16 +367,51 @@ public class VMPlacementTester
 				return null; 
 			} 
 			
+			//request sequence obtained as in submitted Algorithm 1 for the Springer's Software Quality Journal SI: Testing Software and Systems
 			RequestSequence alpha = boundaryTSGen(pc, vars, fsize);
 		
-			//get request sequence -- algorithm in sqj
-			
-			
 			//get optimal... call optimal with another set of bounds if optimal differs from max otherwise optimal from obtained bnoundary
-			//from optimal, get expected vmtestcase
-			//VMPlacementTestCase tc = new VMPlacementTestCase(pconf, alpha, exouts);
 			PlacementConfiguration expected = pc.clone();
-			//expected.setValAtIndex(1,1,0);//add the correspoinding optimal
+			
+			if(optGoal == GRB.MINIMIZE)
+			{
+				//add restrictions w.r.t. the requested resources.
+				//\sum_{i=1}^{m}pc_{ij} = \sum_{a=1}^{l}\alpha_{a_j}; \forall j=1,\ldots,n
+				for(int j = 1; j <= VC.size(); j++)
+				{	
+					GRBLinExpr allocConstraint = new GRBLinExpr();
+					for(int i = 1; i <= CI.size(); i++)
+						allocConstraint.addTerm(1,vars.get("pc_"+i+"_"+j));
+					//allocConstraint holds sum_{i=1}^{m}pc_{ij}
+				
+					int VMjReqQuantity = 0;
+					for(int a = 1; a <= alpha.size(); a++)	
+						VMjReqQuantity += ((Request)alpha.get(a - 1)).getValues()[j - 1]; //\alpha_{a_j}				//VMjReqQuantity holds \sum_{a=1}^{l}\alpha_{a_j}
+					
+					model.addConstr(allocConstraint, GRB.EQUAL, VMjReqQuantity, "num_req_vm"+j);
+				}
+				
+				//re-compute the optimal 
+				model.setObjective(obj, GRB.MINIMIZE);
+
+				//optimize
+				model.optimize();
+			
+				optimstatus = model.get(GRB.IntAttr.Status);
+	
+				if (optimstatus != GRB.Status.OPTIMAL) 
+				{
+        				System.out.println("Error! Optimal solution not found for request sequence of boundary test suite!");
+					return null; 
+				} 
+
+			}
+
+			//expected is loaded in vars at this point
+			for(int i = 1; i <= CI.size(); i++)
+					for(int j = 1; j <= VC.size(); j++)
+						expected.setValAtIndex((int)vars.get("pc_"+i+"_"+j).get(GRB.DoubleAttr.X), i - 1, j - 1);
+
 
 			LinkedList<PlacementConfiguration> exouts = new LinkedList();
 			exouts.add(expected);
@@ -379,210 +426,15 @@ public class VMPlacementTester
 			return null;
 		}
 	}
-
-	/**************************************************************************
-	Particular tests
-	*****************************************************************************/
+		
+	/*
+		For each new criterion a function must be created:
+		public static VMPlacementTestCase get<crit>TC (PlacementConfiguration pc)
+	*/
 	
-	public static VMPlacementTestCase testcase1()
+	public static VMPlacementTestCase getResourceUtilizationTC (PlacementConfiguration pc)
 	{
-		CloudInfrastructure CI = new CloudInfrastructure();
-		CI.add(new Host(3,3));		
-		CI.add(new Host(3,2));		
-
-		VMConfiguration VC = new VMConfiguration();
-		VC.add(new VM(3,2));
-		VC.add(new VM(2,3));
-		VC.add(new VM(2,2));
-		VC.add(new VM(1,1));
-
-		PlacementConfiguration pconf = new PlacementConfiguration(CI, VC);
-	
-		RequestSequence alpha = new RequestSequence();
-		alpha.add(new Request(0,0,0,1));
-		alpha.add(new Request(0,0,0,1));
-		alpha.add(new Request(0,0,0,1));
-		//alpha.add(new Request(0,0,1,0));
-		alpha.add(new Request(1,0,0,0));
-
-		VMPlacementTestCase autogen = generateTestCase(pconf, "Occupation", GRB.MAXIMIZE, VMPlacementTester::occupationModel, VMPlacementTester::addOccupationConstraints, VMPlacementTester::occupationSize);
-
-		RequestSequence autogenrs = autogen.getReqSeq();
-
-		System.out.println(autogenrs+"\n"+alpha+"\nEqual? "+(autogenrs.toString().equals(alpha.toString())));
-
-
-		PlacementConfiguration expected = pconf.clone();
-		expected.setValAtIndex(1,1,0);
-		//expected.setValAtIndex(1,1,2);
-		expected.setValAtIndex(3,0,3);
-
-		LinkedList<PlacementConfiguration> exouts = new LinkedList();
-		exouts.add(expected);
-
-		VMPlacementTestCase tc = new VMPlacementTestCase(pconf, alpha, exouts);
-		return tc;
+		return generateTestCase(pc, "Occupation", GRB.MAXIMIZE, VMPlacementTester::occupationModel, VMPlacementTester::addOccupationConstraints, VMPlacementTester::occupationSize);
 	}
 
-	public static VMPlacementTestCase testcase2()
-	{
-		CloudInfrastructure CI = new CloudInfrastructure();
-		CI.add(new Host(3,2));		
-		CI.add(new Host(3,3));		
-		CI.add(new Host(3,2));		
-
-		VMConfiguration VC = new VMConfiguration();
-		VC.add(new VM(3,2));
-		VC.add(new VM(2,3));
-		VC.add(new VM(2,2));
-		VC.add(new VM(1,1));
-
-		PlacementConfiguration pconf = new PlacementConfiguration(CI, VC);
-	
-		RequestSequence alpha = new RequestSequence();
-		alpha.add(new Request(0,0,0,1));
-		alpha.add(new Request(0,0,0,1));
-		alpha.add(new Request(0,0,0,1));
-		//alpha.add(new Request(0,0,1,0));
-		alpha.add(new Request(1,0,0,0));
-		alpha.add(new Request(1,0,0,0));
-
-		PlacementConfiguration expected = pconf.clone();
-		expected.setValAtIndex(1,0,0);
-		expected.setValAtIndex(3,1,3);
-		expected.setValAtIndex(1,2,0);
-		//expected.setValAtIndex(1,1,2);
-
-		LinkedList<PlacementConfiguration> exouts = new LinkedList();
-		exouts.add(expected);
-
-		VMPlacementTestCase tc = new VMPlacementTestCase(pconf, alpha, exouts);
-		return tc;
-	}
-
-	public static VMPlacementTestCase testcase3()
-	{
-		CloudInfrastructure CI = new CloudInfrastructure();
-		CI.add(new Host(64,96));		
-		CI.add(new Host(96,64));		
-		CI.add(new Host(32,32));		
-
-		VMConfiguration VC = new VMConfiguration();
-		VC.add(new VM(3,2));
-		VC.add(new VM(2,3));
-		VC.add(new VM(2,2));
-		VC.add(new VM(1,1));
-
-		PlacementConfiguration pconf = new PlacementConfiguration(CI, VC);
-	
-		RequestSequence alpha = new RequestSequence();
-
-		alpha.add(new Request(0,0,0,1));
-		alpha.add(new Request(0,0,0,1));//2 machines type 4
-	
-		for(int i = 0; i < 38; i++)
-			alpha.add(new Request(0,1,0,0)); //38 machines type 2
-
-		for(int i = 0; i < 38; i++)
-			alpha.add(new Request(1,0,0,0)); //38 machines type 1
-
-
-		PlacementConfiguration expected = pconf.clone();
-		expected.setValAtIndex(32,0,1);//32 vms of type two placed at host 1
-		expected.setValAtIndex(32,1,0); //32 vms type 1 placed at host 2
-		expected.setValAtIndex(6,2,0); //etc
-		expected.setValAtIndex(6,2,1);
-		expected.setValAtIndex(2,2,3);
-
-		LinkedList<PlacementConfiguration> exouts = new LinkedList();
-		exouts.add(expected);
-
-		VMPlacementTestCase tc = new VMPlacementTestCase(pconf, alpha, exouts);
-		return tc;
-	}
-
-	public static VMPlacementTestCase testcase4()
-	{
-		CloudInfrastructure CI = new CloudInfrastructure();
-		CI.add(new Host(64,96));		
-		CI.add(new Host(96,64));		
-		CI.add(new Host(32,32));		
-		CI.add(new Host(64,96));		
-		CI.add(new Host(96,64));		
-		CI.add(new Host(32,32));		
-		CI.add(new Host(64,96));		
-		CI.add(new Host(96,64));		
-		CI.add(new Host(32,32));		
-
-		VMConfiguration VC = new VMConfiguration();
-		VC.add(new VM(3,2));
-		VC.add(new VM(2,3));
-		VC.add(new VM(2,2));
-		VC.add(new VM(1,1));
-
-		PlacementConfiguration pconf = new PlacementConfiguration(CI, VC);
-	
-		RequestSequence alpha = new RequestSequence();
-
-		for(int i = 0; i < 66; i++)
-			alpha.add(new Request(0,0,0,1));//66 machines type 4
-
-		for(int i = 0; i < 102; i++)
-			alpha.add(new Request(0,1,0,0)); //38 machines type 2
-
-		for(int i = 0; i < 102; i++)
-			alpha.add(new Request(1,0,0,0)); //38 machines type 1
-
-		VMPlacementTestCase autogen = generateTestCase(pconf, "Occupation", GRB.MAXIMIZE, VMPlacementTester::occupationModel, VMPlacementTester::addOccupationConstraints, VMPlacementTester::occupationSize);
-
-		RequestSequence autogenrs = autogen.getReqSeq();
-
-		System.out.println(autogenrs+"\n\n"+alpha+"\nEqual? "+(autogenrs.toString().equals(alpha.toString())));
-
-
-		PlacementConfiguration expected = pconf.clone();
-		expected.setValAtIndex(32,0,1); //32 vms type 2 placed at host 1
-		expected.setValAtIndex(32,1,0); //32 vms type 1 placed at host 2
-		expected.setValAtIndex(32,2,3); //32 vms type 4 placed at host 3
-		expected.setValAtIndex(32,3,1); //32 vms type 2 placed at host 4
-		expected.setValAtIndex(32,4,0); //32 vms type 1 placed at host 5
-		expected.setValAtIndex(32,5,3); //32 vms type 4 placed at host 6
-		expected.setValAtIndex(32,6,1); //32 vms type 2 placed at host 7
-		expected.setValAtIndex(32,7,0); //32 vms type 1 placed at host 8
-		expected.setValAtIndex(06,8,1); //06 vms type 2 placed at host 9
-		expected.setValAtIndex(06,8,0); //06 vms type 1 placed at host 9
-		expected.setValAtIndex(02,8,3); //06 vms type 4 placed at host 9
-
-		LinkedList<PlacementConfiguration> exouts = new LinkedList();
-		exouts.add(expected);
-
-		VMPlacementTestCase tc = new VMPlacementTestCase(pconf, alpha, exouts);
-		return tc;
-	}
-
-	public static LinkedList<VMPlacementTestCase> createTestCases()
-	{
-		LinkedList<VMPlacementTestCase> testcases = new LinkedList();
-//		testcases.add(testcase1());
-//		testcases.add(testcase2());
-//		testcases.add(testcase3());
-		testcases.add(testcase4());
-		return testcases;
-	}
-
-	public static void main(String args[])
-	{
-		LinkedList<VMPlacementTestCase> testcases = createTestCases();
-		VMPlacementTester tester = new VMPlacementTester(false, 100, testcases);
-		AvailableRandomPlacement arp = new AvailableRandomPlacement();	
-		FirstFitPlacement ffp = new FirstFitPlacement();
-		tester.test(arp, VMPlacementTester::occupation, "Occupation");
-		System.out.println();
-		tester.test(ffp, VMPlacementTester::occupation, "Occupation");
-		System.out.println("\n\n");
-		tester.test(arp, VMPlacementTester::powerConsumption, "Power Consumption");
-		System.out.println();
-		tester.test(ffp, VMPlacementTester::powerConsumption, "Power Consumption");
-
-	}
 }
