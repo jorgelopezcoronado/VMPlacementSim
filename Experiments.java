@@ -89,18 +89,17 @@ public class Experiments
 	public static PlacementConfiguration ptc1()
 	{
 		CloudInfrastructure CI = new CloudInfrastructure();
-		CI.add(new Host(3,3));		
-		CI.add(new Host(3,2));		
+		CI.add(new Host(4,3));		
+		CI.add(new Host(4,3));		
 
 		VMConfiguration VC = new VMConfiguration();
-		VC.add(new VM(3,2));
-		VC.add(new VM(2,3));
+		VC.add(new VM(4,1));
 		VC.add(new VM(2,2));
 		VC.add(new VM(1,1));
 
 		PowerConsumptionProfile CP = new PowerConsumptionProfile();
-		CP.add(new PowerConsumption(10,10,5));
-		CP.add(new PowerConsumption(5,5,5));
+		CP.add(new PowerConsumption(10,15,5));
+		CP.add(new PowerConsumption(10,5,15));
 
 		return new PlacementConfiguration(CI, VC, CP);
 	}

@@ -87,6 +87,12 @@ public class PlacementConfiguration
 			System.out.println("Error, wrong arguments for placement configuration size, 0 not allowed!");
 			throw new IllegalArgumentException();
 		}	
+
+		if(value > 0 )
+		{
+			((Host)CI.get(i)).setBooted(true);
+		}
+
 		this.pc[i][j] = value;
 
 	}
@@ -144,7 +150,7 @@ public class PlacementConfiguration
 	//deep deep closning
 	public PlacementConfiguration clone()
 	{
-		PlacementConfiguration clone = new PlacementConfiguration(this.CI.clone(), this.VC.clone());
+		PlacementConfiguration clone = new PlacementConfiguration(this.CI.clone(), this.VC.clone(), this.CP.clone());
 		for(int i = 0; i < this.pc.length; i++)
 			for (int j = 0; j < this.pc[0].length; j++)	
 				clone.pc[i][j] = this.pc[i][j];	

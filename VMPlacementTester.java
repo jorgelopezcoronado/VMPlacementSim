@@ -88,6 +88,7 @@ public class VMPlacementTester
 				e += pc.getMatrix()[i][j] * sumOfPowerConsos; //pc_{ij}*\sum_{k=1}^{p}
 			}
 		}
+
 		return e;
 	}
 
@@ -123,7 +124,7 @@ public class VMPlacementTester
 				VMPlacementSimulator.simulate(pc, alpha, A);
 				if(this.verbose)
 				{
-					System.out.println("Final of = "+occupation(pc)+", Final placement configuration");
+					System.out.println("Final f = "+function.compute(pc)+", Final placement configuration");
 					System.out.println(pc);
 					System.out.println("Expected \n\t\t==================\n");
 				}
@@ -131,7 +132,7 @@ public class VMPlacementTester
 				{	
 					if(this.verbose)
 					{
-						System.out.println("of = "+occupation(expectedout));
+						System.out.println("f = "+function.compute(expectedout));
 						System.out.println(expectedout);
 						System.out.println("\t\t==================\n");
 					}
@@ -469,6 +470,7 @@ public class VMPlacementTester
 			//Optimize the model and check
 			model.set("LogToConsole", "0");
 			model.optimize();
+	
 			
 			int optimstatus = model.get(GRB.IntAttr.Status);
 	
@@ -507,7 +509,7 @@ public class VMPlacementTester
 
 				//optimize
 				model.optimize();
-			
+
 				optimstatus = model.get(GRB.IntAttr.Status);
 	
 				if (optimstatus != GRB.Status.OPTIMAL) 
@@ -516,13 +518,27 @@ public class VMPlacementTester
 					return null; 
 				} 
 
+				//reverse alpha... order conjecture?
+				RequestSequence aux = new RequestSequence();
+				while(!alpha.isEmpty())
+					aux.add(alpha.removeLast());
+				
+				alpha = null;
+				
+				alpha = aux;
+			
+				aux = null;
 			}
 
 			//expected is loaded in vars at this point
 			for(int i = 1; i <= CI.size(); i++)
-					for(int j = 1; j <= VC.size(); j++)
-						expected.setValAtIndex((int)vars.get("pc_"+i+"_"+j).get(GRB.DoubleAttr.X), i - 1, j - 1);
-
+			{
+				for(int j = 1; j <= VC.size(); j++)
+					expected.setValAtIndex((int)vars.get("pc_"+i+"_"+j).get(GRB.DoubleAttr.X), i - 1, j - 1);
+				//add also b_{i}'s
+				((Host)CI.get(i - 1)).setBooted(((int)vars.get("b_"+i).get(GRB.DoubleAttr.X) == 1)?true:false);
+				
+			}
 
 			LinkedList<PlacementConfiguration> exouts = new LinkedList();
 			exouts.add(expected);
