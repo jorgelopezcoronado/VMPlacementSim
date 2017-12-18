@@ -143,7 +143,7 @@ public class VMPlacementTester
 				}
 			}
 	
-			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(1000));
+			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(this.repetitions)+"ms");
 		}
 	}	
 
@@ -443,6 +443,8 @@ public class VMPlacementTester
 	{
 		try
 		{
+
+			long init_time = System.currentTimeMillis();
 			GRBEnv env = new GRBEnv("VMPlacementTCGen."+name+".log");
 			GRBModel model = new GRBModel(env);
 			
@@ -519,7 +521,7 @@ public class VMPlacementTester
 				} 
 
 				//reverse alpha... order conjecture?
-				RequestSequence aux = new RequestSequence();
+				/*RequestSequence aux = new RequestSequence();
 				while(!alpha.isEmpty())
 					aux.add(alpha.removeLast());
 				
@@ -527,7 +529,7 @@ public class VMPlacementTester
 				
 				alpha = aux;
 			
-				aux = null;
+				aux = null;*/
 			}
 
 			//expected is loaded in vars at this point
@@ -544,6 +546,8 @@ public class VMPlacementTester
 			exouts.add(expected);
 
 			VMPlacementTestCase tc = new VMPlacementTestCase(pc, alpha, exouts);
+
+			System.out.println("TC Generation time: "+(System.currentTimeMillis()-init_time)+"ms");
 			return tc;
 	
 		}
