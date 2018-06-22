@@ -97,16 +97,28 @@ public class VMPlacementTester
 		return Math.abs(function.compute(expected) - function.compute(out));
 	}
 
+	private static float ratio (PlacementConfiguration expected, PlacementConfiguration out, ObjectiveFunction function)	
+	{
+		return function.compute(out)/function.compute(expected);
+	}
+
+
 	public void test(VMPlacementAlgorithm A, ObjectiveFunction function, String name)
 	{
 
 		System.out.println("Testing "+A.getName()+", criterion: "+name);
+		if(testcases == null || testcases.isEmpty())
+		{
+			System.out.println("Error Empty set of test cases!");
+			return;
+		}
 		
 		int tc = 1; ///quick and dirty modif... should have changed the for and that is it
 
 		for (VMPlacementTestCase testcase : testcases)
 		{
 			int avg_d = 0;
+			double avg_r = 0;
 			long init_time = System.currentTimeMillis();
 			RequestSequence alpha = testcase.getReqSeq();
 			System.out.println("Test case #"+tc+++" Sequence: "+alpha);
@@ -137,13 +149,18 @@ public class VMPlacementTester
 						System.out.println("\t\t==================\n");
 					}
 					int distance = distance(expectedout, pc, function);
+					int ratrio = ratio(expectedout, pc, function);
 					avg_d += distance;
+					avg_r += ratio;
 					if(this.verbose)
+					{
 						System.out.println(name+" Distance: "+distance);
+						System.out.println(name+" Ratio: "+ratio);
+					}
 				}
 			}
 	
-			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(this.repetitions)+"ms");
+			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\t Ratio: "+avg_r/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(this.repetitions)+"ms");
 		}
 	}	
 
@@ -547,7 +564,7 @@ public class VMPlacementTester
 
 			VMPlacementTestCase tc = new VMPlacementTestCase(pc, alpha, exouts);
 
-			System.out.println("TC Generation time: "+(System.currentTimeMillis()-init_time)+"ms");
+			System.out.println(name+"TC Generation time: "+(System.currentTimeMillis()-init_time)+"ms TS Length: "+alpha.size());
 			return tc;
 	
 		}

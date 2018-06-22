@@ -11,6 +11,5 @@ public class VMPlacementSimulator
 			Request r = (Request)seq.get(l);
 			A.place(tempPC, r, pm);
 		}
-				
 	}
 }

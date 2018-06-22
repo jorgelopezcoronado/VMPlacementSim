@@ -106,7 +106,6 @@ public class PlacementConfiguration
 		}
 		
 		this.pc[i][j]++;
-
 	}
 
 	public boolean pcEquals(Object o)
