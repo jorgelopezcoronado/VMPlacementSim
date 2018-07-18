@@ -1,5 +1,6 @@
 jar: compile
 	jar cf VMPS.jar vmplacementsim/*.class	
+	rm vmplacementsim/*.class
 compile:
 	javac vmplacementsim/*.java
 
