@@ -1,10 +1,10 @@
 jar: compile
-	jar cf VMPS.jar *.class	
+	jar cf VMPS.jar vmplacementsim/*.class	
 compile:
-	javac *.java
+	javac vmplacementsim/*.java
 
 clean:
-	rm *.class
+	rm vmplacementsim/*.class
 	rm *.jar
 
 redo: clean compile
