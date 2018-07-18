@@ -1,10 +1,13 @@
-all:
+jar: compile
+	jar cf VMPS.jar *.class	
+compile:
 	javac *.java
 
 clean:
 	rm *.class
+	rm *.jar
 
-redo: clean all
+redo: clean compile
 
 commit: 
 	echo "Enter message for commit: "

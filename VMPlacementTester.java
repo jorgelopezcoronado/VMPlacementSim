@@ -1,5 +1,6 @@
 import java.util.LinkedList;
 import java.util.HashMap;
+import java.io.*;
 
 //Gurobi is required! 
 import gurobi.*; 
@@ -97,9 +98,9 @@ public class VMPlacementTester
 		return Math.abs(function.compute(expected) - function.compute(out));
 	}
 
-	private static float ratio (PlacementConfiguration expected, PlacementConfiguration out, ObjectiveFunction function)	
+	private static double ratio (PlacementConfiguration expected, PlacementConfiguration out, ObjectiveFunction function)	
 	{
-		return function.compute(out)/function.compute(expected);
+		return (double)function.compute(out)/function.compute(expected);
 	}
 
 
@@ -149,7 +150,7 @@ public class VMPlacementTester
 						System.out.println("\t\t==================\n");
 					}
 					int distance = distance(expectedout, pc, function);
-					int ratrio = ratio(expectedout, pc, function);
+					double ratio = ratio(expectedout, pc, function);
 					avg_d += distance;
 					avg_r += ratio;
 					if(this.verbose)
@@ -160,7 +161,7 @@ public class VMPlacementTester
 				}
 			}
 	
-			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\t Ratio: "+avg_r/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(this.repetitions)+"ms");
+			System.out.println("\t"+name+" Distance: "+(double)avg_d/this.repetitions+"\t Ratio: "+(double)avg_r/this.repetitions+"\n\tTime: "+(double)(System.currentTimeMillis() - init_time)/(this.repetitions)+"ms");
 		}
 	}	
 
@@ -239,6 +240,31 @@ public class VMPlacementTester
 				
 			}
 		}
+
+		/* initial placement configuration? need to add a function that passes the test suite
+	
+		Request r = getRequestFromFile("pc.txt");
+	
+		for(int j = 1; j <= VC.size(); j++)
+		{
+			GRBLinExpr constraint = new GRBLinExpr();
+
+			for(int i = 1; i <= CI.size(); i++)
+				constraint.addTerm(1, vars.get("pc_"+i+"_"+j));
+
+			try
+			{
+				model.addConstr(constraint, GRB.EQUAL, r.getValues()[j-1], "q_"+j);
+			}
+			catch (GRBException e)
+			{
+				System.out.println("Error code: " + e.getErrorCode() + ". " +e.getMessage());
+			}
+		
+		}
+		
+		*/
+
 	}
 
 	private static int powerConsumptionSize(PlacementConfiguration pc, VM vm)
@@ -270,6 +296,54 @@ public class VMPlacementTester
 
 		return size;
 	}
+
+	private static Request getRequestFromFile(String fileName)
+	{
+		String line = null;
+		Request r = new Request(4); 
+		try 
+		{
+			FileReader fileReader = new FileReader(fileName);
+
+            		BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+	            	if((line = bufferedReader.readLine()) != null) //single line file reading
+			{
+				int base = line.indexOf("(") + 1;
+				while(base > 0)
+				{
+					line = line.substring(base);
+					if(line.charAt(0) == '(')//we are at the begining
+						line = line.substring(1);
+
+					int t1 = Character.getNumericValue(line.charAt(0));
+					int t2 = Character.getNumericValue(line.charAt(3));
+					int t3 = Character.getNumericValue(line.charAt(6));
+					int t4 = Character.getNumericValue(line.charAt(9));
+			
+					int r_vals[] = r.getValues();
+					r_vals[0] += t1; 	
+					r_vals[1] += t2; 	
+					r_vals[2] += t3; 	
+					r_vals[3] += t4; 	
+			
+					r.setValues(r_vals);
+						
+					base = line.indexOf("(") + 1;
+				}
+				 
+			}
+
+            		bufferedReader.close();         
+            	}   
+        	catch(Exception ex) 
+		{
+            		System.out.println("Unable with file '" +fileName + "'");                
+        	}
+
+		return r;
+
+	} 
 
 	/*
 	// Occupation
@@ -332,6 +406,30 @@ public class VMPlacementTester
 				
 			}
 		}
+
+		/*Initial placement? need to add a function to read the original requests / TS
+		
+		Request r = getRequestFromFile("ru.txt");
+
+		for(int j = 1; j <= VC.size(); j++)
+		{
+			GRBLinExpr constraint = new GRBLinExpr();
+
+			for(int i = 1; i <= CI.size(); i++)
+				constraint.addTerm(1, vars.get("pc_"+i+"_"+j));
+
+			try
+			{
+				model.addConstr(constraint, GRB.EQUAL, r.getValues()[j-1], "q_"+j);
+			}
+			catch (GRBException e)
+			{
+				System.out.println("Error code: " + e.getErrorCode() + ". " +e.getMessage());
+			}
+		
+		}
+		*/
+
 	}
 
 	private static int occupationSize(PlacementConfiguration pc, VM vm)
@@ -492,7 +590,21 @@ public class VMPlacementTester
 	
 			
 			int optimstatus = model.get(GRB.IntAttr.Status);
-	
+
+			if(optimstatus == GRB.Status.INF_OR_UNBD)			
+			{
+				model.set(GRB.IntParam.Presolve, 0);
+       	 			model.optimize();
+        			optimstatus = model.get(GRB.IntAttr.Status);
+			}
+
+      			 if (optimstatus == GRB.Status.INFEASIBLE)
+			{
+				model.update();
+				model.write("debug.lp");
+			}
+
+
 			if (optimstatus != GRB.Status.OPTIMAL) 
 			{
         			System.out.println("Error! Optimal solution not found for boundary test case");
