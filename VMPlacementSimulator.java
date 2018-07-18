@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public class VMPlacementSimulator
 {
 	public static void simulate(PlacementConfiguration configuration, RequestSequence seq,  VMPlacementAlgorithm A)

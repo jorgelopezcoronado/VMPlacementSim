@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public class FirstFitPlacement implements VMPlacementAlgorithm
 {
 	public String getName()

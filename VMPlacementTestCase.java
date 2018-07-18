@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 import java.util.LinkedList;
 public class VMPlacementTestCase
 {

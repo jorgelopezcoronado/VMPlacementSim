@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 import java.util.Random;
 import java.util.LinkedList;
 public class AvailableRandomPlacement implements VMPlacementAlgorithm

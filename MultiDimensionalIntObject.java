@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public abstract class MultiDimensionalIntObject
 {
 	public int dimensions = 1;

@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public class VMConfiguration extends MultiDimensionalIntObjectCollection<VM>
 {
 	public VMConfiguration()

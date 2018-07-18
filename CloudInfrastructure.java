@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public class CloudInfrastructure extends MultiDimensionalIntObjectCollection<Host>
 {
 	public CloudInfrastructure()

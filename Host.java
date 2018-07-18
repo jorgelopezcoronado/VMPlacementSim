@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public class Host extends MultiDimensionalIntObject
 {
 

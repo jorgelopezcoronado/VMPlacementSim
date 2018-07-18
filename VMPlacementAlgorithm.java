@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public interface VMPlacementAlgorithm
 {
 	public String getName();

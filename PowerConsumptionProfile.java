@@ -1,3 +1,5 @@
+package vmplacementsim;
+
 public class PowerConsumptionProfile extends MultiDimensionalIntObjectCollection<PowerConsumption>
 {
 	public PowerConsumptionProfile()
