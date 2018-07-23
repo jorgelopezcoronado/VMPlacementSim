@@ -12,8 +12,8 @@ This API is provided as Java source code, under the BSD 3-clause
 license. To install, simply download the source code, and update the
 Java CLASSPATH correspondingly in your system. The code *requires Java
 8* due to the constructs used. Further, as the generation of the test
-suites[@ICTSS17] rely on the solution of an Integer Linear
-Programming (ILP) problem, the Gurobi [@gurobi] optimization tool is
+suites[1] rely on the solution of an Integer Linear
+Programming (ILP) problem, the Gurobi [2] optimization tool is
 also required; recent versions (7 and 8) of the tool are known to work,
 version 7 is preferred for stability reasons.
 
