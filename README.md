@@ -358,6 +358,6 @@ An example is included in this repository, in the file `Example.java`
 
 References
 ----------
-[1] Jorge López, Natalia Kushik, and Djamal Zeghlache. Quality estimation of virtual machine placement in cloud infrastructures. In Testing Software and Systems - 29th IFIP WG 6.1 International Conference, ICTSS 2017, St. Petersburg, Russia, October 9-11, 2017, Proceedings, pages 213{229, 2017.
+[1] Jorge López, Natalia Kushik, and Djamal Zeghlache. Quality estimation of virtual machine placement in cloud infrastructures. In Testing Software and Systems - 29th IFIP WG 6.1 International Conference, ICTSS 2017, St. Petersburg, Russia, October 9-11, 2017, Proceedings, pages 213-229, 2017.
 
 [2] Gurobi Optimization et al. Gurobi optimizer reference manual. URL: http://www.gurobi. com, 2012.
