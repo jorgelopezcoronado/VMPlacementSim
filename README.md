@@ -5,7 +5,7 @@ for Virtual Machine (VM) placement modules. Also, the API contains
 facilities for simulating VM placement algorithms under the generated
 test cases.
 
-Installation / Software Requirements {#installation-software-requirements .unnumbered .unnumbered}
+Installation / Software Requirements
 ====================================
 
 This API is provided as Java source code, under the BSD 3-clause
@@ -161,7 +161,7 @@ The output of the previous command should be:
 If the Gurobi software is running correctly, you can proceed to compile
 the classes found in this repository.
 
-Using the Java Classes {#using-the-java-classes .unnumbered .unnumbered}
+Using the Java Classes
 ----------------------
 
 The easiest way to use the API is to put in your `CLASSPATH` environment
@@ -185,7 +185,7 @@ belong to the Java package `vmplacementsim`. To compile the java
 classes, a Makefile is provided in this repository. To create a new jar
 file, simple issue the `make` command.
 
-Using the Java API {#using-the-java-api .unnumbered .unnumbered}
+Using the Java API
 ==================
 
 This API contains two main functionalities. The first functionality is
@@ -197,7 +197,7 @@ environment; the second is related to the test case generation; and,
 finally, the third is the simulation of the test suites. Each of those
 groups is explained below.
 
-Creating the Cloud Environment Objects {#creating-the-cloud-environment-objects .unnumbered .unnumbered}
+Creating the Cloud Environment Objects
 --------------------------------------
 
 Cloud environment objects are hosts (correspondingly the list of hosts,
@@ -269,7 +269,7 @@ be implemented as follows:
         }   
 ```
 
-Generating Test Cases for Cloud Environments {#generating-test-cases-for-cloud-environments .unnumbered .unnumbered}
+Generating Test Cases for Cloud Environments
 --------------------------------------------
 
 Once the placement configuration and all related objects is created,
@@ -312,7 +312,7 @@ element. For example, the tuple (1, 0, 0, 0) represents a request for a
 single VM of the configuration 1 in the VM configurations (where there
 are 4).
 
-Simulating VM Placement Requests for VM Placement Algorithms {#simulating-vm-placement-requests-for-vm-placement-algorithms .unnumbered .unnumbered}
+Simulating VM Placement Requests for VM Placement Algorithms
 ------------------------------------------------------------
 
 As mentioned before, the Java API also includes an interface for
@@ -350,10 +350,14 @@ Correspondingly the output is the following:
         Occupation Distance: 145.0   Ratio: 0.8824006488240044
         Time: 2.33ms
 
-Learn by Example {#learn-by-example .unnumbered .unnumbered}
+Learn by Example
 ----------------
 
 An easy way to learn how the API works is to look at a complete example.
 An example is included in this repository, in the file `Example.java`
 
-\bibliographystyle{plain}
+References
+----------
+[1] Jorge López, Natalia Kushik, and Djamal Zeghlache. Quality estimation of virtual machine placement in cloud infrastructures. In Testing Software and Systems - 29th IFIP WG 6.1 International Conference, ICTSS 2017, St. Petersburg, Russia, October 9-11, 2017, Proceedings, pages 213{229, 2017.
+
+[2] Gurobi Optimization et al. Gurobi optimizer reference manual. URL: http://www.gurobi. com, 2012.
